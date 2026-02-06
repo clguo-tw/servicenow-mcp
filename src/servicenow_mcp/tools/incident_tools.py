@@ -68,11 +68,12 @@ class ResolveIncidentParams(BaseModel):
 
 class ListIncidentsParams(BaseModel):
     """Parameters for listing incidents."""
-    
+
     limit: int = Field(10, description="Maximum number of incidents to return")
     offset: int = Field(0, description="Offset for pagination")
     state: Optional[str] = Field(None, description="Filter by incident state")
     assigned_to: Optional[str] = Field(None, description="Filter by assigned user")
+    assignment_group: Optional[str] = Field(None, description="Filter by assignment group name")
     category: Optional[str] = Field(None, description="Filter by category")
     query: Optional[str] = Field(None, description="Search query for incidents")
 
@@ -488,6 +489,8 @@ def list_incidents(
         filters.append(f"state={params.state}")
     if params.assigned_to:
         filters.append(f"assigned_to={params.assigned_to}")
+    if params.assignment_group:
+        filters.append(f"assignment_group.name={params.assignment_group}")
     if params.category:
         filters.append(f"category={params.category}")
     if params.query:
@@ -514,7 +517,12 @@ def list_incidents(
             assigned_to = incident_data.get("assigned_to")
             if isinstance(assigned_to, dict):
                 assigned_to = assigned_to.get("display_value")
-            
+
+            # Handle assignment_group field which could be a string or a dictionary
+            assignment_group = incident_data.get("assignment_group")
+            if isinstance(assignment_group, dict):
+                assignment_group = assignment_group.get("display_value")
+
             incident = {
                 "sys_id": incident_data.get("sys_id"),
                 "number": incident_data.get("number"),
@@ -523,6 +531,7 @@ def list_incidents(
                 "state": incident_data.get("state"),
                 "priority": incident_data.get("priority"),
                 "assigned_to": assigned_to,
+                "assignment_group": assignment_group,
                 "category": incident_data.get("category"),
                 "subcategory": incident_data.get("subcategory"),
                 "created_on": incident_data.get("sys_created_on"),
@@ -595,6 +604,10 @@ def get_incident_by_number(
         if isinstance(assigned_to, dict):
             assigned_to = assigned_to.get("display_value")
 
+        assignment_group = incident_data.get("assignment_group")
+        if isinstance(assignment_group, dict):
+            assignment_group = assignment_group.get("display_value")
+
         incident = {
             "sys_id": incident_data.get("sys_id"),
             "number": incident_data.get("number"),
@@ -603,6 +616,7 @@ def get_incident_by_number(
             "state": incident_data.get("state"),
             "priority": incident_data.get("priority"),
             "assigned_to": assigned_to,
+            "assignment_group": assignment_group,
             "category": incident_data.get("category"),
             "subcategory": incident_data.get("subcategory"),
             "created_on": incident_data.get("sys_created_on"),
